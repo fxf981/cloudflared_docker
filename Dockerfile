@@ -2,45 +2,25 @@
 FROM alpine:latest
 
 # 设置工作目录
-WORKDIR /usr/local/bin
+WORKDIR /app
 
-# 下载并安装 Cloudflared
-# 这个 RUN 命令会根据构建时的架构（TARGETARCH）自动下载对应的 Cloudflared 版本。
-# TARGETARCH 是 Docker 内置的一个构建参数，会自动识别当前构建目标架构。
-RUN set -x && \
-    echo "--- 开始执行 apk update ---" && \
-    apk update || { echo "错误: apk update 失败！" >&2; exit 1; } && \
-    echo "--- apk update 完成 ---" && \
-    echo "--- 开始安装 curl ---" && \
-    apk add --no-cache curl || { echo "错误: 安装 curl 失败！" >&2; exit 1; } && \
-    echo "--- curl 安装完成 ---" && \
-    \
-    CURRENT_TARGETARCH="$(TARGETARCH)" && \
-    echo "检测到的构建架构 TARGETARCH: ${CURRENT_TARGETARCH}" && \
-    case "${CURRENT_TARGETARCH}" in \
-        "amd64") \
-            CLOUD_FLARED_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" ;; \
-        "arm64") \
-            CLOUD_FLARED_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" ;; \
-        *) \
-            echo "错误: 不支持的构建架构 ${CURRENT_TARGETARCH}。仅支持 amd64 和 arm64。" >&2 && exit 1 ;; \
-    esac && \
-    echo "正在下载 Cloudflared for ${CURRENT_TARGETARCH} from ${CLOUD_FLARED_URL}" && \
-    curl -sSL "${CLOUD_FLARED_URL}" -o cloudflared || { echo "错误: curl 下载 Cloudflared 失败！" >&2; exit 1; } && \
-    echo "--- Cloudflared 下载完成 ---" && \
-    \
-    echo "--- 正在添加执行权限 ---" && \
-    chmod +x cloudflared || { echo "错误: 添加执行权限失败！" >&2; exit 1; } && \
-    echo "--- 执行权限添加完成 ---" && \
-    \
-    echo "--- 清理不必要的软件包和缓存 ---" && \
-    apk del curl || { echo "警告: 删除 curl 失败。" >&2; } && \
-    rm -rf /var/cache/apk/* || { echo "警告: 清理缓存失败。" >&2; } && \
-    echo "--- 清理完成 ---" && \
-    set +x # 关闭调试模式
-    
-# 定义默认的 ENTRYPOINT，这样在运行容器时可以直接执行 cloudflared 命令
-ENTRYPOINT ["cloudflared"]
+# 安装必要的工具：wget 和 bash
+# wget 用于下载你的 init.sh 脚本
+# bash 是因为你的 init.sh 脚本是 bash 脚本
+# 注意：这里仍然需要在构建阶段安装 wget 和 bash
+RUN apk update && \
+    apk add --no-cache wget bash && \
+    rm -rf /var/cache/apk/*
 
-# 定义默认的 CMD，例如启动一个 tunnel
-CMD ["--help"]
+# 创建 entrypoint.sh 脚本，它将负责下载 cloudflared
+# 这里直接将内容写入文件，避免在构建阶段再次进行外部下载
+COPY entrypoint.sh /app/entrypoint.sh
+# 确保 entrypoint.sh 脚本可执行
+RUN chmod +x /app/entrypoint.sh
+
+# 设置 ENTRYPOINT 为你的脚本
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# CMD 可以作为 ENTRYPOINT 的默认参数，或用于在没有额外参数时提供默认行为
+# 如果你的 entrypoint.sh 脚本能够处理参数，这里可以留空或设置默认值
+CMD []
