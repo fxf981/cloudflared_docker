@@ -5,11 +5,20 @@ FROM alpine:latest
 WORKDIR /usr/local/bin
 
 # 下载并安装 Cloudflared
-# 这里我们直接使用 /latest URL，并让 curl 处理重定向以获取实际下载链接
-# 注意：这假设 GitHub Pages 的 /latest 重定向后会提供一个可下载的链接
+# 这个 RUN 命令会根据构建时的架构（TARGETARCH）自动下载对应的 Cloudflared 版本。
+# TARGETARCH 是 Docker 内置的一个构建参数，会自动识别当前构建目标架构。
 RUN apk update && \
     apk add --no-cache curl && \
-    curl -sSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared && \
+    case "$(TARGETARCH)" in \
+        "amd64") \
+            CLOUD_FLARED_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" ;; \
+        "arm64") \
+            CLOUD_FLARED_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" ;; \
+        *) \
+            echo "错误: 不支持的构建架构 $(TARGETARCH)。仅支持 amd64 和 arm64。" && exit 1 ;; \
+    esac && \
+    echo "正在下载 Cloudflared for $(TARGETARCH) from ${CLOUD_FLARED_URL}" && \
+    curl -sSL "${CLOUD_FLARED_URL}" -o cloudflared && \
     chmod +x cloudflared && \
     apk del curl && \
     rm -rf /var/cache/apk/*
