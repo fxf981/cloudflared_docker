@@ -39,3 +39,5 @@ jobs:
           push: true
           platforms: linux/amd64, linux/arm64
           tags: ${{ env.DOCKERHUB_REPOSITORY }}
+          no-cache: true # 确保每次都从头构建，排除缓存问题
+          provenance: false # 简化构建输出，减少潜在干扰
