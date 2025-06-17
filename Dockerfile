@@ -4,12 +4,9 @@ FROM alpine:latest
 # 设置工作目录
 WORKDIR /app
 
-# 安装必要的工具：wget 和 bash
-# wget 用于下载你的 init.sh 脚本
-# bash 是因为你的 init.sh 脚本是 bash 脚本
-# 注意：这里仍然需要在构建阶段安装 wget 和 bash
+# 安装必要软件包
 RUN apk update && \
-    apk add --no-cache wget bash && \
+    apk add --no-cache curl bash && \
     rm -rf /var/cache/apk/*
 
 # 创建 entrypoint.sh 脚本，它将负责下载 cloudflared
