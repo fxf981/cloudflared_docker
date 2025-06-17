@@ -43,7 +43,7 @@ case "$(uname -m)" in
 esac
 
 # Cloudflared 下载地址的基础 URL
-BASE_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux"
+BASE_URL="https://p.ff11.tk/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux"
 
 # 根据架构确定完整的下载文件名
 DOWNLOAD_FILE=""
