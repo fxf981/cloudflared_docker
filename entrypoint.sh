@@ -13,6 +13,9 @@ error() {
     exit 1
 }
 
+# 设置 DNS
+echo -e "nameserver 127.0.0.11\nnameserver 8.8.4.4\nnameserver 223.5.5.5\nnameserver 2001:4860:4860::8844\nnameserver 2400:3200::1\n" > /etc/resolv.conf
+
 # Cloudflared 将被下载到此目录
 INSTALL_DIR="/usr/local/bin"
 CLOUDFLARED_BIN="${INSTALL_DIR}/cloudflared"
